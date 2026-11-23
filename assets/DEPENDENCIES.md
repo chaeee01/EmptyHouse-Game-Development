@@ -3,12 +3,14 @@
 `assets/` 의 프리팹·프로파일은 팀 Unity 프로젝트 안에서만 동작한다. 아래 GUID 대상 중 **본인 신규 스크립트·프로파일만** 이 저장소에 있고, 나머지(팀 공통 스크립트, 이벤트 채널·설정 SO, Walker 아트)는 포함하지 않았다.
 
 ## 포함하지 않은 Walker 아트 (임시 외형)
-두 프리팹은 팀의 `04. Arts/Walker/Walker.prefab` 을 그대로 중첩한다 — **전용 외형·모션은 아직 없다.**
+두 프리팹(팀 커밋 시점 버전)은 팀의 `04. Arts/Walker/Walker.prefab` 을 그대로 중첩한다. 전용 외형·모션은 별도로 제작해 작업 브랜치에서 연결했으며 팀 저장소에는 미반영이다([docs/06](../docs/06_CHARACTER_PIPELINE.md)).
+
+> 정정(2026-11-23): 이전 판에서 Walker 아트를 "스캔 기반 제3자 모델 · Mixamo 계열 애니메이션"이라고 적었으나, 팀 반입 도구(`ZombieSmplBuilder`) 기록상 현재 Walker 는 신규 캐릭터와 **같은 영상→3D(SMPL 리그) 파이프라인 산출물**이다. 제외 이유는 용량이며, SMPL 상업 라이선스 사안은 신규 캐릭터와 같다.
 
 | 대상 | 크기(대략) | 제외 이유 |
 |---|---|---|
-| `Walker_Skinned.asset` · `Walker_LOD1.asset` · `Walker_LOD2.asset` (메시) | 58MB · 33MB · 27MB | 용량 + 스캔 기반 모델 원본의 제3자 출처 — 팀 승인 범위 밖 |
-| `ZombieLocomotion_Walker.controller` + `Clips/*.anim` 11개 | 약 18MB | 외부(Mixamo 계열) 애니메이션 변환본 — 제3자 라이선스 |
+| `Walker_Skinned.asset` · `Walker_LOD1.asset` · `Walker_LOD2.asset` (메시) | 58MB · 33MB · 27MB | 용량 |
+| `ZombieLocomotion_Walker.controller` + `Clips/*.anim` 11개 | 약 18MB | 용량(아트와 한 세트) |
 | `Walker.mat` · `WalkerAvatar.asset` · `Walker_Upper.mask` · 텍스처 | 소량 | 위 모델과 한 세트 |
 
 ## 프리팹·프로파일이 참조하는 GUID
