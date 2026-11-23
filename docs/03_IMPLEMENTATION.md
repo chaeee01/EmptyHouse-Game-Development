@@ -134,3 +134,43 @@
 ### 8) 팀 저장소 커밋·PR
 - 커밋 `a33b1b92` — `[v1.2.0] feat: 학생(Student) 좀비 종 추가 — 비명 예고·서버 소음 1회·도주·쿨다운` (19파일)
 - 브랜치 `feat/teacher-student-zombies` 푸시 완료 · PR 미생성. 맵 출현 목록(레지스트리) 변경은 커밋에서 제외. (비공개 저장소)
+
+---
+
+## 부록 A. 종별 구조 · 네트워크 연동 · 예외 처리 (코드 기준, 2026-11-23)
+
+### A-1. 클래스 구조
+팀 공통 `ZombieController`(서버 틱·감지·의심도·상태 머신 구동)와 `ZombieProfileSO`(공통 수치)를 상속하고, 팀이 열어 둔 확장 지점만 재정의한다. 상태는 팀 `IZombieState` 를 구현한다.
+
+| 역할 | Teacher | Student |
+|---|---|---|
+| Controller (`: ZombieController`) | `ZombieControllerTeacher` — 감지 기여 훅(`ServerContributePerception`): 추격 전 단계에서 "시야 안 + 달리기"만 통과 · 상태 교체 훅(`TryCreateSpeciesState`): `RoarTransition` → 경고 · `ServerCancelWarning` · `ServerIsTargetSprinting` · `InterruptsRoarOnCancel = true` | `ZombieControllerStudent` — 감지 기여 훅: 발견 즉시 발각, 쿨다운 중이면 즉시 도주 · 상태 교체 훅: `RoarTransition` → 예고, `Flee` → 도주 · `ServerEmitScream` · `ServerCancelScream` · `ServerForgetThreat` · `ServerIsScreamOnCooldown` · `InterruptsRoarOnCancel = true` |
+| State (`: IZombieState`) | `TeacherWarningState` (Kind = `RoarTransition`) | `StudentScreamWindupState` (Kind = `RoarTransition`) · `StudentFleeState` (Kind = `Flee`) |
+| Profile (`: ZombieProfileSO`) | `TeacherProfileSO` — `WarningSeconds` 2 · `WarningSprintStopGraceSeconds` 0.25 · `WarningLostSightGraceSeconds` 0.75 | `StudentProfileSO` — `ScreamWindupSeconds` 1.5 · `ScreamLostSightGraceSeconds` 0.25 · `ScreamNoiseDb` 80 · `ScreamCooldownSeconds` 20 · `FleeSpeed` 3 · `FleeStepMeters` 6 · `FleeRepathSeconds` 1 · `FleeGiveUpSeconds` 3 · `FleeSampleDirections` 8 |
+| 순수 규칙 (Unity 비의존 어셈블리) | `TeacherWarningRules` (`PassesDetectionGate`, `Step`) | `StudentScreamRules` (`StepWindup`, `IsOnCooldown`, `BuildFleeCandidates`, `ScoreFleePoint`, `StepFleeGiveUp`) |
+| 공통(두 종 사용) | `RoarInterruptRules.ShouldInterrupt` — 포효 중단 판정 | 같음 |
+| 프로파일 에셋 계약 | 청각 끔 · 무리 동조 끔 | 청각 끔(자기 비명 무시) · 무리 동조 끔 · 비명 채널 배선 |
+
+팀 공용 파일에 한 수정(모두 추가만, 기존 종 동작 불변 — 테스트로 확인): `ZombieSpecies` 열거형 2줄 · 감지 인터페이스 `IsSprinting` · 컨트롤러의 포효 중단 옵트인 속성(기본 false)과 상태 머신 `protected` 접근자 · 애니메이터의 포효 중단 처리 · NetworkPrefab 목록 2항목.
+
+### A-2. 네트워크 연동
+- **서버 권위**: 감지·판정·전이·비명 발행은 모두 서버(호스트)에서만 돈다(팀 `ZombieController.Update` 의 서버 분기 안). 새 NetworkVariable·RPC 는 **0개**.
+- **클라이언트 연출**: 경고·예고는 기존에 복제되는 상태 값(`RoarTransition`)을 재사용해, 클라이언트가 기존 경로로 포효 애니메이션·음성을 재생한다. 포효 중단은 클라이언트가 복제 상태의 에지(`RoarTransition → Wander`)와 종 고정 속성을 보고 각자 판단하므로 모든 클라이언트가 같은 결과를 낸다.
+- **달리기 판정(Teacher)**: 플레이어 이동 컴포넌트의 달리기 값(오너 권위 NetworkVariable)을 서버에서 읽는다.
+- **비명(Student)**: 서버가 기존 소음 이벤트 채널(ScriptableObject)에 단발 이벤트를 1회 발행 → 서버의 소음 전파 시스템이 거리·벽 차폐·각 좀비 가청 판정을 처리 → 주변 좀비가 기존 청각 경로로 조사. 쿨다운 시각은 서버 메모리에만 둔다(복제 안 함).
+- **프리팹**: 각 종 프리팹은 NetworkPrefab 목록에 등록하고, 네트워크 식별 해시가 다른 프리팹과 겹치지 않음을 파일 값으로 확인했다(Teacher 704143739 · Student 3895826500).
+- **미검증**: 2인(클라이언트) 환경에서의 실제 연출 — 플레이 테스트는 호스트 1인으로만 진행했다.
+
+### A-3. 예외 처리와 방어
+| 상황 | Teacher | Student |
+|---|---|---|
+| 타겟이 사라짐(사망·귀환·위장) | 경고 즉시 취소(`CancelNoTarget`) | 예고 즉시 취소(`CancelNoTarget`) |
+| 같은 틱에 취소·완료가 겹침 | 취소 우선 | 취소 우선(시야 상실 판정이 완료보다 먼저) · 비명을 낸 뒤에는 취소로 번복하지 않음(`Screamed` 를 가장 먼저 검사) |
+| 비명 중복 | — | 한 예고에서 `Scream` 은 1회만 반환 · 플레이 로그로 중복 0 확인 |
+| 경직·기절 | (코어가 상태 Tick 을 멈춤) | 코어 처리 + 규칙의 `CancelIncapacitated` — **플레이 미검증** |
+| 음수·0 시간 입력 | 0 으로 처리 | 0 으로 처리 |
+| 설정 누락 | — | 비명 채널 미배선 시 에러 로그 후 비명을 내지 않음(프리팹 테스트로 배선 확인) |
+| 도주 위협을 특정 못 함(전원 관전 등) | — | 서서 포기 타이머만 진행 |
+| 도주 막다른 곳 / 위협이 발밑 | — | 서서 대기 / 정면을 반대 방향으로 간주 |
+| 포효 레이어에 빈 상태가 없는 애니메이터 | 포효 중단을 건너뜀 | 같음 |
+| 다인 판정 한계(인지) | 시야 원뿔 안 **최근접 1명**만 판정 — 가까운 사람이 걷고 먼 사람이 달리면 감지 못함 | — |
