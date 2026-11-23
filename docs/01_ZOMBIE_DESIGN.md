@@ -39,7 +39,7 @@
 
 
 ## 5. 상태 전이와 취소 조건 (코드 기준)
-경고는 새 상태 종류를 만들지 않고 기존 발각 전환(`RoarTransition`) 자리를 `TeacherWarningState` 로 교체해 구현했다. 판정은 `TeacherWarningRules.Step` 이 매 서버 틱 수행한다.
+경고는 새 상태 종류를 만들지 않고 기존 발각 전환(`RoarTransition`) 자리를 `TeacherWarningState`([코드](../src/Teacher/TeacherStates.cs)) 로 교체해 구현했다. 판정은 `TeacherWarningRules.Step`([코드](../src/Teacher/TeacherWarningRules.cs)) 이 매 서버 틱 수행한다.
 
 | 현재 상태 | 조건 | 다음 상태 | 처리 |
 |---|---|---|---|
@@ -94,7 +94,7 @@
 - **한계(인지)**: 비명 위치는 학생 자신의 위치다. 벽 차폐로 교실 밖에는 거의 닿지 않는다(문 열림 여부에 좌우) — 플레이 테스트로 크기 조정 예정.
 
 ## 5. 상태 전이와 취소 조건 (코드 기준)
-예고는 발각 전환(`RoarTransition`) 자리를 `StudentScreamWindupState` 로, 도주는 `Flee` 자리를 `StudentFleeState` 로 교체해 구현했다. 판정은 `StudentScreamRules` 가 수행한다.
+예고는 발각 전환(`RoarTransition`) 자리를 `StudentScreamWindupState` 로, 도주는 `Flee` 자리를 `StudentFleeState` 로 교체해 구현했다([코드](../src/Student/StudentStates.cs)). 판정은 `StudentScreamRules`([코드](../src/Student/StudentScreamRules.cs)) 가 수행한다.
 
 | 현재 상태 | 조건 | 다음 상태 | 처리 |
 |---|---|---|---|

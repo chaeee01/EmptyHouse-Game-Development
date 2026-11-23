@@ -1,95 +1,176 @@
-# EmptyHouse Game Development — 개인 담당 작업 기록
+# EmptyHouse Game Development — 신규 좀비 2종(선생님·학생) 개인 작업 아카이브
 
-> 저장소 상태: **비공개(Private)**. 팀 공개 승인과 라이선스 확인 전에는 Public 전환·외부 공유를 하지 않는다.
-> 기준일: 2026-11-23
+> **이 저장소는 실행 가능한 Unity 프로젝트가 아니다.** 팀 Unity 프로젝트(Empty House)에서 본인이 구현한 종별 기능의 코드·테스트·프리팹/프로파일 에셋과, 이해에 필요한 팀 공통 시스템 일부를 모은 **포트폴리오용 코드 아카이브**다. Walker 모델·애니메이션, 이벤트 채널·설정 에셋, 나머지 팀 코드가 없으므로 이 저장소만으로는 빌드·실행·프리팹 열기가 되지 않는다.
+>
+> 저장소 상태: **비공개(Private)** · 기준일 2026-11-23 · 원본: 팀 저장소 `SOMA-Studio-301/EmptyHouse` 기능 브랜치 `feat/teacher-student-zombies` (커밋 `a33b1b92`)
 
-## 프로젝트
-- 게임: Empty House (빈 집) — 1~4인 협동 생존 호러, PC(Steam), Unity 6 URP, Netcode for GameObjects
-- 팀: SW마에스트로 17기 · Studio 301
-- 이 저장소의 범위: **본인이 직접 담당한 신규 좀비 2종(선생님 Teacher · 학생 Student)의 기획·구현·검증 기록**. 신규 맵은 후순위(미착수).
-
-## 현재 상태 요약
-
-### 완료 — 종별 행동 기능 구현과 검증
-| 항목 | 결과 | 근거 |
-|---|---|---|
-| 기획 · 핵심 행동 구현 | **Teacher·Student 기획 확정 · 핵심 행동 구현 완료** — 종별 컨트롤러·프로파일·전용 상태·순수 규칙, 독립 프리팹·NetworkPrefab 등록 | [01](docs/01_ZOMBIE_DESIGN.md) · [03](docs/03_IMPLEMENTATION.md) |
-| Unity 컴파일 | **오류 0** (Teacher 커밋 단독 상태 · 최종 상태 각각 확인) | [04](docs/04_TEST_RESULTS.md) 0절 |
-| 신규 자동 테스트 | **38/38 통과** (Teacher 22 · Student 16) | 04 0절 |
-| 전체 EditMode | **294개 중 291 통과 · 기존 실패 2 · 건너뜀 1** — 실패·건너뜀은 변경 전 기준선과 동일한 팀 기존 테스트 | 04 0절 |
-| Teacher 실제 플레이 | **핵심 행동 확인** — 걷기 무반응 · 달리기 시 경고 진입(7회) · 경고 중 달리기 중단 시 취소(5회) · 경고 무시 2초 후 추격(2회, 2.02s·2.03s) · 추격 중 걷기 전환 시 추격 유지 · 관성 추격 후 귀가 | 04 3절 |
-| Student 실제 플레이 | **비명·도주·쿨다운 로그 확인** — 예고 72 = 완료 61 + 시야 상실 취소 11 · 비명 61회(중복 0) · 비명 후 도주 61 · 쿨다운 중 비명 없이 도주 101 · 위협 상실 후 진정 159(귀가 완료 34) | 04 5절 |
-
-### 부분 확인 — 인과 미확정
-- **주변 Walker 의 소음 반응**: 학생 2마리 동시 비명 직후 0~3.19초 안에 Walker 12마리가 조사 상태로 전환. 소음 연동의 **강한 정황 증거**이나, 감지(수신) 로그가 없어 **직접 인과관계는 확정하지 않는다**.
-
-### 미완료 — 남은 작업
-| 구분 | 내용 |
+## 한눈에 보기
+| 항목 | 결과 |
 |---|---|
-| 외형·연출 | 두 종 모두 **전용 외형·모션 미제작** (Walker 모델·포효 클립 임시 사용), 학생 비명 전용 음성 없음 |
-| 미검증 | 2인(클라이언트) 연출 · Teacher 경고 연출 시각 식별 · 0.25초 유예 정량 측정 · 경고 중 시야 상실 취소 · 포효 중단 화면 확인 · Student 예고 중 경직·기절 취소 |
-| 정식 게임 통합 | 팀 PR 미생성·미병합 · 일반 맵 스폰 목록(레지스트리) 미반영 · 도감·설명 텍스트 미작성 |
-| 증거 자료 | 플레이 영상·스크린샷 미확보 |
-| 코드 공개 | 코드 원문 미포함 — 팀 승인 대기(아래 "개인 코드 아카이브") |
+| 기획 · 핵심 행동 구현 | **Teacher·Student 완료** — 종별 Controller·State·Profile·순수 규칙, 독립 프리팹, NetworkPrefab 등록 |
+| Unity 컴파일 | **오류 0** (Teacher 커밋 단독 상태 · 최종 상태 각각) |
+| 신규 자동 테스트 | **38/38 통과** (Teacher 22 · Student 16) |
+| 전체 EditMode | **294개 중 291 통과 · 기존 실패 2 · 건너뜀 1** — 실패·건너뜀은 변경 전 기준선과 동일한 팀 기존 테스트 |
+| 실제 플레이 | Teacher 핵심 행동 확인 · Student 비명·도주·쿨다운 로그 확인 (호스트 1인) |
+| 미완료 | 전용 외형·모션(현재 Walker 임시), 2인 검증, 정식 게임 통합(PR·맵 스폰 목록·도감 텍스트), 영상·스크린샷 |
 
-## 기여 범위
-- **팀 기존 시스템(사용)**: 좀비 상태 머신·의심도, 시각·청각 감지 수집, 추격·관성 추격·조사·귀가, 소음 전파·가청 판정, 무리 동조, 서버 권위 상태 복제, 맵 생성 스폰, Walker 모델·애니메이션.
-- **본인 구현**: 두 종의 기획·수치, 기존 확장 지점(감지 기여·상태 교체) 위의 종별 컨트롤러·상태·순수 규칙, 비명 소음 발행·쿨다운, 독립 도주 구현, 경고 취소 시 포효 중단(종별 옵트인), 프리팹·프로파일·등록, 신규 테스트 38개, 플레이 로그 분석.
-- 기존 시스템을 새로 개발한 것으로 표현하지 않는다. 구현하지 않은 기능은 완료로 적지 않는다.
+## 저장소 구성
+```
+src/
+  Teacher/      본인 신규 — Teacher 컨트롤러·상태·프로파일·규칙
+  Student/      본인 신규 — Student 컨트롤러·상태·프로파일·규칙
+  Shared/       본인 신규 — 두 종 공용 순수 규칙(포효 중단) + 규칙 어셈블리 정의
+  TeamSystems/  팀 공통 시스템(참고용) — 종별 코드가 상속·호출하는 파일만 선별, 일부는 본인이 몇 줄 추가
+                OWN_CHANGES.diff = 팀 공통 파일에 대한 본인 변경분 전체
+tests/
+  Rules/        순수 규칙 EditMode 테스트(26개) + 테스트 어셈블리 정의
+  Editor/       실제 프리팹·애니메이터 검증 EditMode 테스트(12개)
+assets/
+  Prefabs/      Zombie_Teacher / Zombie_Student 프리팹(+.meta)
+  Profiles/     SO_Zombie_Teacher / SO_Zombie_Student 프로파일(+.meta)
+  DEPENDENCIES.md  프리팹·프로파일이 참조하는 GUID와 미포함 이유
+docs/           01 기획 · 02 레벨(미착수) · 03 구현 기록 · 04 테스트 결과 · 05 포트폴리오 구성안
+SOURCES.md      모든 파일의 원래 Unity 경로 · 구분(본인/팀) · 크기 · 해시
+```
+- 모든 파일은 팀 커밋 `a33b1b92` 에서 **수정 없이** 가져왔다. 원래 경로와 구분은 [SOURCES.md](SOURCES.md).
+- 순수 규칙(`*Rules.cs`)과 그 테스트만 Unity·팀 타입에 의존하지 않는다. 나머지는 팀 공통 시스템(`src/TeamSystems`)과 Unity·Netcode 를 전제로 한다.
+
+---
+
+## 선생님(Teacher) — "달리면 걸린다"
+
+### 기획 의도
+플레이어의 기본 생존 수단인 **달리기에 비용**을 붙인다. 평소에는 걷는 플레이어를 무시하고, 시야 안에서 달리는 플레이어만 적발해 경고한다. 경고를 무시하면 추격한다.
+
+### 행동 규칙
+| 상황 | 반응 |
+|---|---|
+| 시야 안에서 걷기·웅크림·정지 | 무반응 |
+| 시야 안에서 달리기 | 제자리 정지 + 경고(포효 연출) 2초 |
+| 경고 중 달리기 중단 0.25초 / 시야 상실 0.75초 / 타겟 소실 | 경고 취소 → 타겟·래치·위협 음악 해제 → 순찰, 포효 즉시 중단 |
+| 경고를 무시하고 2초간 달림 | 추격 |
+| 추격 시작 후 | 걸어도 즉시 해제하지 않음 — 팀 기존 추격·관성 추격 규칙(시야 상실 1.5초 → 관성 추격 8초 → 조사 → 귀가) |
+
+### 상태 전이
+```mermaid
+stateDiagram-v2
+    direction LR
+    state "순찰·경계·조사·진정 (팀 상태)" as Calm
+    state "경고 TeacherWarningState (본인)" as Warn
+    state "추격 Chase (팀)" as Chase
+    state "관성 추격 ChaseBlind (팀)" as Blind
+    Calm --> Calm: 걷기·정지 = 무반응 (감지 게이트)
+    Calm --> Warn: 시야 안 + 달리기
+    Warn --> Calm: 달리기 중단 0.25s / 시야 상실 0.75s / 타겟 소실
+    Warn --> Chase: 2초간 계속 달림
+    Chase --> Blind: 시야 상실 1.5s
+    Blind --> Chase: 8초 안 재발견 (걸어도 재개)
+    Blind --> Calm: 만료 → 조사 → 귀가
+```
+
+### 구현 파일
+| 파일 | 역할 |
+|---|---|
+| [`src/Teacher/ZombieControllerTeacher.cs`](src/Teacher/ZombieControllerTeacher.cs) | 팀 `ZombieController` 상속. 감지 기여 훅에서 추격 전 단계에만 "시야 안 + 달리기" 게이트 적용, 상태 교체 훅에서 `RoarTransition` → 경고, 경고 취소(`ServerCalmDown`), 포효 중단 옵트인 |
+| [`src/Teacher/TeacherStates.cs`](src/Teacher/TeacherStates.cs) | `TeacherWarningState` — 매 서버 틱 규칙 판정 결과를 추격/취소 전이로 옮김, 분석용 로그(`t=`·경과·달리기 중단 시간) |
+| [`src/Teacher/TeacherProfileSO.cs`](src/Teacher/TeacherProfileSO.cs) | 경고 2s · 달리기 중단 유예 0.25s · 시야 상실 유예 0.75s |
+| [`src/Teacher/TeacherWarningRules.cs`](src/Teacher/TeacherWarningRules.cs) | 감지 게이트·경고 판정 순수 규칙 — 우선순위 타겟 소실 → 달리기 중단 → 시야 상실 → 만료(같은 틱이면 취소 우선) |
+| [`src/Shared/RoarInterruptRules.cs`](src/Shared/RoarInterruptRules.cs) | 취소(→순찰)일 때만 포효를 끊는 판정 — 경고→추격·기존 종은 종전대로 |
+
+---
+
+## 학생(Student) — "들키면 시끄러워진다"
+
+### 기획 의도
+직접 공격하지 않는 대신 **비명으로 주변 좀비를 불러 상황을 악화**시킨다. 예고 중 시야를 끊거나 기절시키면 비명을 막을 수 있는 대응 창을 준다.
+
+### 행동 규칙
+| 상황 | 반응 |
+|---|---|
+| 평소 | 스폰 지점(교실) 주변 배회 |
+| 시야로 플레이어 발견 | 즉시 비명 예고(제자리 정지 + 예고 연출) 1.5초 |
+| 예고 중 시야 상실 0.25초 / 타겟 소실 / 경직·기절 | 비명 취소 → 배회, 포효 즉시 중단 |
+| 예고 완료 | 서버가 **비명 소음 이벤트 1회** 발행(80dB) → 주변 좀비가 기존 청각으로 위치 조사 |
+| 비명 직후 | 플레이어 반대 방향으로 도주 → 3초간 못 보면 진정 → 귀가 |
+| 쿨다운 20초 중 재발견 | 비명 없이 바로 도주 |
+
+### 상태 전이
+```mermaid
+stateDiagram-v2
+    direction LR
+    state "배회·경계·조사·진정 (팀 상태)" as Calm
+    state "비명 예고 StudentScreamWindupState (본인)" as Wind
+    state "도주 StudentFleeState (본인)" as Flee
+    Calm --> Wind: 시야로 발견 (쿨다운 아님)
+    Calm --> Flee: 시야로 발견 + 쿨다운 중 (예고 생략)
+    Wind --> Calm: 시야 상실 0.25s / 타겟 소실 / 경직·기절 — 비명 없음
+    Wind --> Flee: 1.5s 완료 → 서버 소음 이벤트 1회 + 쿨다운 시작
+    Flee --> Calm: 3s 못 봄 → 진정 → 귀가
+```
+
+### 구현 파일
+| 파일 | 역할 |
+|---|---|
+| [`src/Student/ZombieControllerStudent.cs`](src/Student/ZombieControllerStudent.cs) | 팀 `ZombieController` 상속. 발견 즉시 발각, 쿨다운 중이면 상태 머신으로 즉시 도주, `RoarTransition` → 예고 · `Flee` → 도주 교체, `ServerEmitScream`(서버 소음 1회 + 쿨다운), 취소·위협 망각 |
+| [`src/Student/StudentStates.cs`](src/Student/StudentStates.cs) | `StudentScreamWindupState`(예고 판정 → 비명/취소) · `StudentFleeState`(위협 반대 방향 지점 선정·재선정·포기 — Oiler 도주를 참고한 독립 구현) |
+| [`src/Student/StudentProfileSO.cs`](src/Student/StudentProfileSO.cs) | 예고 1.5s · 유예 0.25s · 비명 80dB · 쿨다운 20s · 도주 3m/s · 6m · 1s · 3s · 8방향 |
+| [`src/Student/StudentScreamRules.cs`](src/Student/StudentScreamRules.cs) | 예고 판정(비명 1회 보장)·쿨다운·도주 후보 방향·점수·포기 순수 규칙 |
+
+---
+
+## 기존 공통 시스템을 재사용·확장한 방법
+- **상속 + 확장 훅만 재정의**: 두 종 모두 팀 `ZombieController`([참고](src/TeamSystems/Zombie/ZombieController.cs))를 상속하고, 팀이 열어 둔 두 확장 지점만 사용한다 — 감지 기여 훅(`ServerContributePerception`, 지각 조립체 [`ZombiePerceptionBuilder`](src/TeamSystems/Zombie/ZombiePerceptionBuilder.cs) 수정)과 상태 교체 훅(`TryCreateSpeciesState`, 상태 머신 [`ZombieStateMachine`](src/TeamSystems/Zombie/ZombieStateMachine.cs)이 우선 조회).
+- **새 상태 종류 없이 교체**: 경고·예고는 기존 발각 전환(`RoarTransition`) 자리, 도주는 기존 `Flee` 자리를 종별 상태로 교체 — 복제되는 상태 종류를 늘리지 않았다.
+- **팀 공통 파일 변경은 추가만**([OWN_CHANGES.diff](src/TeamSystems/OWN_CHANGES.diff)): 종 열거형 2값 · 감지 인터페이스 `IsSprinting` · 포효 중단 옵트인 속성(기본 false)과 애니메이터 처리 · 상태 머신 `protected` 접근자. 기존 6종 동작 불변은 테스트로 확인.
+
+## 서버 소음 이벤트와 네트워크 처리
+- **서버 권위**: 감지·판정·전이·비명 발행은 서버(호스트)에서만 돈다. 새 NetworkVariable·RPC **0개**.
+- **연출 복제**: 경고·예고는 이미 복제되는 `RoarTransition` 상태를 재사용 → 클라이언트가 기존 경로로 포효 애니메이션·음성 재생. 포효 중단은 각 클라이언트가 복제 상태 에지와 종 고정 속성으로 같은 판단을 한다.
+- **달리기 판정(Teacher)**: 플레이어의 달리기 값(오너 권위 NetworkVariable)을 서버에서 읽는다 — [`ZombiePerceptionSource`](src/TeamSystems/Zombie/ZombiePerceptionSource.cs).
+- **비명(Student)**: 서버가 [소음 발행 채널](src/TeamSystems/NoiseSystem/NoiseEmittedEventChannelSO.cs)에 단발 이벤트([`NoiseEmittedEvent`](src/TeamSystems/NoiseSystem/NoiseEvents.cs))를 1회 발행 → 팀 [`NoisePropagationSystem`](src/TeamSystems/NoiseSystem/NoisePropagationSystem.cs)이 거리 감쇠(1.5dB/m)·벽 차폐(60dB)·좀비별 가청 판정 → 주변 좀비가 기존 청각으로 위치를 조사(소음원이 플레이어가 아니라 타겟은 잡지 않음). 쿨다운 시각은 서버 메모리에만 있다.
+- **프리팹**: NetworkPrefab 등록, 네트워크 식별 해시 고유(Teacher 704143739 · Student 3895826500 — 파일 값 확인).
+
+## 테스트와 검증
+| 구분 | 결과 | 코드 |
+|---|---|---|
+| Teacher 경고 규칙 | 9/9 | [`tests/Rules/TeacherWarningRulesTests.cs`](tests/Rules/TeacherWarningRulesTests.cs) |
+| 포효 중단 규칙 | 5/5 | [`tests/Rules/RoarInterruptRulesTests.cs`](tests/Rules/RoarInterruptRulesTests.cs) |
+| Teacher 실제 프리팹·애니메이터 | 8/8 | [`tests/Editor/TeacherRoarInterruptTests.cs`](tests/Editor/TeacherRoarInterruptTests.cs) |
+| Student 비명·도주 규칙 | 12/12 | [`tests/Rules/StudentScreamRulesTests.cs`](tests/Rules/StudentScreamRulesTests.cs) |
+| Student 실제 프리팹·등록 | 4/4 | [`tests/Editor/StudentPrefabTests.cs`](tests/Editor/StudentPrefabTests.cs) |
+| **신규 합계** | **38/38** | |
+| 전체 EditMode | 294개 중 291 통과 · 기존 실패 2 · 건너뜀 1 (기준선 동일) | [04](docs/04_TEST_RESULTS.md) |
+
+**실제 플레이(에디터 호스트 1인, Editor.log 분석)**
+- Teacher: 경고 7회 → 달리기 중단 취소 5 · 2초 후 추격 2(경과 2.02s · 2.03s) · 추격 중 걷기 시 추격 유지 · 관성 추격 후 귀가.
+- Student: 예고 72 = 완료 61 + 시야 상실 취소 11 · 비명 61회(중복 0) · 비명 후 도주 61 · 쿨다운 중 비명 없이 도주 101 · 위협 상실 후 진정 159(귀가 완료 34).
+- 주변 Walker 반응: 학생 2마리 동시 비명 직후 0~3.19초 안에 Walker 12마리가 조사로 전환 — **강한 정황 증거, 감지 로그가 없어 직접 인과는 미확정**.
+
+**미검증**: 2인(클라이언트) 연출 · Teacher 경고 연출 시각 식별 · 0.25초 유예 정량 · 경고 중 시야 상실 취소 · 포효 중단 화면 확인 · Student 예고 중 경직·기절 취소.
+
+## 팀 공통 시스템 vs 본인 구현
+| 팀 공통 시스템 (팀 작성 — `src/TeamSystems` 는 참고용) | 본인 구현 (`src/Teacher` · `src/Student` · `src/Shared` · `tests` · `assets`) |
+|---|---|
+| 좀비 컨트롤러·상태 머신·의심도, 시각·청각 감지 수집, 공통 상태(배회·조사·추격·관성 추격·진정), 소음 전파·가청 판정, 무리 동조, 서버 권위 복제, 맵 생성 스폰, Walker 모델·애니메이션 | 두 종 기획·수치, 감지 게이트, 경고·예고·도주 상태와 순수 규칙, 비명 소음 발행·쿨다운, 포효 중단 옵트인, 팀 공통 파일의 소규모 확장(OWN_CHANGES.diff), 프리팹·프로파일 구성·등록, 신규 테스트 38개, 플레이 로그 분석 |
+
+## 포함하지 않은 것
+- **Walker 모델·메시·애니메이션·머티리얼**(약 137MB): 용량과 제3자 출처(스캔 모델·Mixamo 계열 애니메이션) 때문에 제외 — [assets/DEPENDENCIES.md](assets/DEPENDENCIES.md). 두 종은 **전용 외형·모션 없이 Walker 를 임시 사용** 중이다.
+- 이벤트 채널·설정 ScriptableObject, 나머지 팀 코드(플레이어·오디오·UI·다른 종 등), Unity 프로젝트 설정·패키지, 맵 스폰 목록 변경(팀 미반영).
+- 공개 범위: 저장소 소유자가 팀에 확인한 범위(2026-11-23) 안에서 비공개 저장소에 보관한다. 승인 기록 위치: _(기입 필요)_. 제3자 에셋은 팀 승인과 별개라 포함하지 않는다.
 
 ## 팀 저장소 참조 (비공개)
-> 팀 저장소 `SOMA-Studio-301/EmptyHouse` 는 **비공개(Private)** 다. 아래 링크는 팀 저장소 접근 권한이 있는 사람만 열 수 있고, **외부(지원서 검토자 등)에서는 열람할 수 없다**.
+> 팀 저장소는 **비공개**라 아래 링크는 팀 저장소 접근 권한이 있는 사람만 열 수 있다. 외부(지원서 검토자 등)는 이 아카이브의 `src/`·`tests/`·`assets/` 를 보면 된다.
 
-- 기능 브랜치: `feat/teacher-student-zombies` (기준 `release/v1.2.0`) — https://github.com/SOMA-Studio-301/EmptyHouse/tree/feat/teacher-student-zombies
-- Teacher 커밋 `20d1c679` — https://github.com/SOMA-Studio-301/EmptyHouse/commit/20d1c67915edccb29e54f7d5ac301ba20aefd32e
-- Student 커밋 `a33b1b92` — https://github.com/SOMA-Studio-301/EmptyHouse/commit/a33b1b92d53a318a8cdbbc3a9ed669afad5f9444
+- 기능 브랜치: https://github.com/SOMA-Studio-301/EmptyHouse/tree/feat/teacher-student-zombies
+- Teacher 커밋 `20d1c679`: https://github.com/SOMA-Studio-301/EmptyHouse/commit/20d1c67915edccb29e54f7d5ac301ba20aefd32e
+- Student 커밋 `a33b1b92`: https://github.com/SOMA-Studio-301/EmptyHouse/commit/a33b1b92d53a318a8cdbbc3a9ed669afad5f9444
 - PR: 미생성
 
-## 개인 코드 아카이브 — 원문 미포함 · 팀 승인 대기 (2026-11-23)
-이 저장소에는 아직 **코드 원문을 넣지 않았다**(`src/`·`tests/` 없음). 아래는 팀 저장소 기능 브랜치에 본인 명의로 커밋한 신규 파일 목록과 역할이며, 팀의 명시적 승인이 나면 원래 파일명·구조를 유지해 `src/`·`tests/` 에 옮길 예정이다.
-
-> **독립 실행 불가**: 이 코드는 팀 Unity 프로젝트(Empty House)의 공통 좀비 AI·소음 시스템·Netcode 위에서만 동작한다. 개인 저장소로 옮겨도 단독으로 빌드·실행되는 프로젝트가 아니다. 예외적으로 순수 규칙 3개와 그 테스트는 Unity·팀 타입에 의존하지 않는다.
-
-### 승인 필요 목록 (본인 작성 신규 파일, 팀 커밋 `20d1c679` · `a33b1b92`)
-| 종 | 파일 (팀 저장소 경로 `Assets/01. Scripts/` 기준) | 줄 수 | 역할 | 의존 |
-|---|---|---|---|---|
-| Teacher | `Game/Zombie/Species/ZombieControllerTeacher.cs` | 77 | 감지 게이트(시야 안 달리기만 통과) · 경고 상태 교체 · 경고 취소 · 포효 중단 옵트인 | 팀 `ZombieController` 상속 |
-| Teacher | `Game/Zombie/States/TeacherStates.cs` | 56 | 경고 상태 — 판정 결과를 추격/취소 전이로 옮김 | 팀 `IZombieState`·상태 머신 |
-| Teacher | `Game/Zombie/Data/TeacherProfileSO.cs` | 25 | 경고 수치(2s · 0.25s · 0.75s) | 팀 `ZombieProfileSO` 상속 |
-| Teacher | `Game/Zombie/Rules/TeacherWarningRules.cs` | 84 | 감지 게이트·경고 판정 순수 규칙 | **없음(순수 C#)** |
-| 공통 | `Game/Zombie/Rules/RoarInterruptRules.cs` | 19 | 취소 시 포효 중단 판정 순수 규칙 | **없음(순수 C#)** |
-| Student | `Game/Zombie/Species/ZombieControllerStudent.cs` | 111 | 발견 즉시 예고 · 쿨다운 중 즉시 도주 · 예고/도주 상태 교체 · 비명 소음 1회 발행 | 팀 `ZombieController`·소음 이벤트 채널 |
-| Student | `Game/Zombie/States/StudentStates.cs` | 176 | 비명 예고 상태 · 독립 도주 상태 | 팀 `IZombieState`·상태 머신·NavMesh |
-| Student | `Game/Zombie/Data/StudentProfileSO.cs` | 39 | 비명·도주 수치 | 팀 `ZombieProfileSO` 상속 |
-| Student | `Game/Zombie/Rules/StudentScreamRules.cs` | 134 | 예고 판정(비명 1회 보장)·쿨다운·도주 후보·점수·포기 순수 규칙 | **없음(순수 C#)** |
-| 테스트 | `Game/Zombie/Rules/Tests/TeacherWarningRulesTests.cs` | 111 | 경고 규칙 9개 | NUnit + 순수 규칙 |
-| 테스트 | `Game/Zombie/Rules/Tests/RoarInterruptRulesTests.cs` | 42 | 포효 중단 규칙 5개 | NUnit + 순수 규칙 |
-| 테스트 | `Game/Zombie/Rules/Tests/StudentScreamRulesTests.cs` | 140 | 비명·도주 규칙 12개 | NUnit + 순수 규칙 |
-| 테스트 | `Editor/Tests/TeacherRoarInterruptTests.cs` | 67 | 실제 프리팹·애니메이터 검증 8개 | Unity 에디터 + 팀 프리팹 |
-| 테스트 | `Editor/Tests/StudentPrefabTests.cs` | 89 | 실제 프리팹·등록 검증 4개 | Unity 에디터·Netcode + 팀 프리팹 |
-| 설정 | `Game/Zombie/Rules/EmptyHouse.Zombie.Rules.asmdef`, `Rules/Tests/EmptyHouse.Zombie.Rules.Tests.asmdef` | 14·24 | 순수 규칙·테스트 어셈블리 정의 | — |
-
-### 승인과 무관하게 제외하는 파일
-| 파일 | 제외 이유 |
-|---|---|
-| `ZombieController.cs`, `ZombieAnimator.cs`, `IZombiePerceptionSource.cs`, `ZombiePerceptionSource.cs`, `ZombieSpecies.cs` | **팀 공용 코드** — 본인 변경은 수 줄의 추가뿐이고 파일 대부분이 팀원 작성 |
-| `Zombie_Teacher.prefab`, `Zombie_Student.prefab` | Unity 프리팹 — 팀 Walker 프리팹 복제본(팀 에셋) |
-| `SO_Zombie_Teacher.asset`, `SO_Zombie_Student.asset`, `DefaultNetworkPrefabs.asset`, `SO_MapPrefabRegistry.asset` | ScriptableObject·프로젝트 에셋(팀 에셋) |
-| 각 `.meta` | Unity 프로젝트 메타데이터 — 개인 저장소에서 의미 없음 |
-
-### 공개 규칙 검토 결과 — 왜 아직 복사하지 않았나
-- 팀 저장소(조직 `SOMA-Studio-301` 소유, 비공개)에는 **라이선스·기여자 정책(CONTRIBUTING·CLA)·코드 소유자 규정이 모든 브랜치에 없다**. 조직 수준 정책 저장소도 없다. 라이선스가 없으면 저작권자의 허락 없이 복제·배포할 권리가 주어지지 않는다.
-- 조직 설정에서 **비공개 저장소의 개인 포크가 금지**돼 있다(`members_can_fork_private_repositories = false`) — 비공개 코드를 조직 밖으로 옮기는 것을 제한하는 방향이다.
-- 팀 README·문서에 외부 공개·포트폴리오용 재사용을 허용하는 규정이 없다.
-- 위 파일은 본인 명의 커밋이지만 팀 제품(Steam 출시 게임)의 일부로 팀 저장소에 들어갔고, 대부분 팀 코드의 타입을 상속·호출한다.
-- 따라서 **명시적으로 허용된 코드가 없어 원문을 옮기지 않았다.** 승인 요청 범위 제안: ① 순수 규칙 3개 + 규칙 테스트 3개(팀 타입 비의존, 위험 가장 낮음) ② 종별 Controller·State·Profile ③ Unity 에디터 테스트. 승인 형태와 범위를 기록으로 남긴 뒤 옮긴다.
-- SW마에스트로 과정의 결과물 귀속·공개 규정은 별도 확인 필요.
-
 ## 문서
-| 문서 | 내용 | 상태 |
-|---|---|---|
-| [01_ZOMBIE_DESIGN](docs/01_ZOMBIE_DESIGN.md) | 선생님·학생 좀비 기획: 행동 규칙, 수치, 설계 판단 | 기획 확정 |
-| [02_LEVEL_DESIGN](docs/02_LEVEL_DESIGN.md) | 신규 방 기획 | 미착수(후순위) |
-| [03_IMPLEMENTATION](docs/03_IMPLEMENTATION.md) | 작업별 구현 기록 (1 선생님 · 1-2 포효 중단 · 1-3 플레이 분석 · 2 학생) | 행동 구현 완료 · 팀 브랜치 커밋·푸시 완료 · PR 미생성 |
-| [04_TEST_RESULTS](docs/04_TEST_RESULTS.md) | 자동 테스트·플레이 로그 검증 결과 | 자동 테스트 완료 · 두 종 플레이 1차 완료(일부 미검증) |
-| [05_PORTFOLIO_PAGE_PLAN](docs/05_PORTFOLIO_PAGE_PLAN.md) | 지원용 포트폴리오 2장 구성안 | 구성 확정 · 캡처·영상 미확보 |
+| 문서 | 내용 |
+|---|---|
+| [01_ZOMBIE_DESIGN](docs/01_ZOMBIE_DESIGN.md) | 두 종 기획 — 행동 규칙, 수치, 설계 판단, 상태 전이·취소 조건 |
+| [02_LEVEL_DESIGN](docs/02_LEVEL_DESIGN.md) | 신규 방 — 미착수(후순위) |
+| [03_IMPLEMENTATION](docs/03_IMPLEMENTATION.md) | 작업별 구현 기록 + 부록(클래스 구조·네트워크·예외 처리) |
+| [04_TEST_RESULTS](docs/04_TEST_RESULTS.md) | 자동 테스트·플레이 로그 검증 결과와 미검증 항목 |
+| [05_PORTFOLIO_PAGE_PLAN](docs/05_PORTFOLIO_PAGE_PLAN.md) | 지원용 포트폴리오 2장 구성안 |

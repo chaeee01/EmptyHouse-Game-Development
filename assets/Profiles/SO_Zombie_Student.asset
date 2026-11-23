@@ -1,0 +1,102 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5ad913f7035344bf92373d1271d44d0, type: 3}
+  m_Name: SO_Zombie_Student
+  m_EditorClassIdentifier: Assembly-CSharp::StudentProfileSO
+  HasVision: 1
+  HasHearing: 0
+  DisguiseBreaksTargeting: 1
+  ThAlert: 30
+  ThInvestigate: 60
+  CoolRatePerSecond: 8
+  SuspicionGraceSeconds: 1.5
+  VisionAngle: 80
+  VisionVerticalAngle: 160
+  VisionDistance: 10
+  VisInstantRange: 5
+  VisProximityRange: 1
+  VisGainBase: 25
+  VisDistNear: 2
+  VisDistFar: 0.5
+  VisFront: 1.5
+  VisLightBright: 1.3
+  VisLightDark: 0.7
+  VisLightFlashlight: 1.8
+  VisPoseWalk: 1
+  VisPoseCrouch: 0.6
+  VisPoseIdle: 0.4
+  EnvironmentIsBright: 0
+  ObstructionMask:
+    serializedVersion: 2
+    m_Bits: 1152
+  HearMinDb: 30
+  HearDetectDb: 70
+  WanderSpeed: 0.4
+  PatrolRadius: 5
+  PatrolSampleAttempts: 12
+  PatrolPauseMinSeconds: 8
+  PatrolPauseMaxSeconds: 10
+  AlertSpeed: 0
+  InvestigateBaseSpeed: 1.6
+  InvestigateCapSpeed: 3.5
+  InvestigateDbToSpeed: 0.05
+  ChaseSpeed: 4
+  SubsideSpeed: 1.8
+  AccelerationMps2: 6
+  TurnSpeedDegreesPerSecond: 360
+  TurnDeadZoneDegrees: 15
+  DestinationRefreshDistance: 0.3
+  ChaseHoldRepathMeters: 1
+  RoarHoldSeconds: 2
+  ChaseLatchGraceSeconds: 1.5
+  ChaseBlindSeconds: 8
+  AttackLockSeconds: 3
+  InvestigateToWanderSeconds: 8
+  InvestigateSearchRadius: 2.5
+  InvestigateSearchPauseSeconds: 1
+  AttackRange: 1.5
+  AttackWindupSeconds: 0.3
+  AttackSpeedMultiplier: 0.5
+  LethalAttack: 0
+  AttackDamage: 1
+  ContactYieldDisguised: 1
+  ContactYieldUndisguised: 1
+  SyncEnabled: 0
+  SyncRadius: 15
+  SyncDelayMaxSeconds: 1
+  SquadLeashSeconds: 15
+  AudioProfile: {fileID: 11400000, guid: 2bafd056288af7c46b8c4c13300dbf28, type: 2}
+  IdleVoice:
+    PlaybackSeconds: 0
+    AudioIds: 77000000
+    MinIntervalSeconds: 3
+    MaxIntervalSeconds: 5
+  ChaseVoice:
+    PlaybackSeconds: 0
+    AudioIds: 74000000
+    MinIntervalSeconds: 4
+    MaxIntervalSeconds: 7
+  ScreamVoice:
+    PlaybackSeconds: 0
+    AudioIds: 78000000
+    MinIntervalSeconds: 6
+    MaxIntervalSeconds: 32
+  ChaseDisguisedOnAuditoryDetect: 0
+  ScreamWindupSeconds: 1.5
+  ScreamLostSightGraceSeconds: 0.25
+  ScreamNoiseDb: 80
+  ScreamCooldownSeconds: 20
+  FleeSpeed: 3
+  FleeStepMeters: 6
+  FleeRepathSeconds: 1
+  FleeGiveUpSeconds: 3
+  FleeSampleDirections: 8

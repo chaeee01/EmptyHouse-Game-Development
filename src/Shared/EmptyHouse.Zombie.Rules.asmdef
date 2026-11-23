@@ -1,0 +1,14 @@
+{
+    "name": "EmptyHouse.Zombie.Rules",
+    "rootNamespace": "EmptyHouse.Zombie.Rules",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

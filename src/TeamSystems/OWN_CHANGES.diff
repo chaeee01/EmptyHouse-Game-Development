@@ -1,0 +1,127 @@
+diff --git a/EmptyHouse/Assets/01. Scripts/Game/Zombie/Data/ZombieSpecies.cs b/EmptyHouse/Assets/01. Scripts/Game/Zombie/Data/ZombieSpecies.cs
+index 85bfdb14..2be0af13 100644
+--- a/EmptyHouse/Assets/01. Scripts/Game/Zombie/Data/ZombieSpecies.cs	
++++ b/EmptyHouse/Assets/01. Scripts/Game/Zombie/Data/ZombieSpecies.cs	
+@@ -10,5 +10,7 @@ public enum ZombieSpecies
+     Stalker, // 구 Watcher — 빛에 멈춘다(좀비타입 4장)
+     Dog,
+     Lurker, // 매복 — 숨어서 첫 인지 플레이어를 사냥감으로 삼고, 발견되면 도망·방 이탈 시 돌진 즉사(사용자 확정 2026-10-06)
+-    Oiler // 기름 좀비 — 겁쟁이. 보면 느리게 도망치고, 기절(30s) 중 들쳐 업어 분쇄기에 넣으면 300L(사용자 확정 2026-10-06)
++    Oiler, // 기름 좀비 — 겁쟁이. 보면 느리게 도망치고, 기절(30s) 중 들쳐 업어 분쇄기에 넣으면 300L(사용자 확정 2026-10-06)
++    Teacher, // 선생님 — 시야 안에서 달리는 플레이어만 감지해 경고한다. 경고 중 걸으면 취소, 무시하고 달리면 추격(2026-11-23)
++    Student // 학생 — 플레이어를 보면 비명 예고 → 서버 소음 1회(주변 좀비 조사) → 도주. 쿨다운 중 발견하면 비명 없이 도주(2026-11-23)
+ }
+diff --git a/EmptyHouse/Assets/01. Scripts/Game/Zombie/IZombiePerceptionSource.cs b/EmptyHouse/Assets/01. Scripts/Game/Zombie/IZombiePerceptionSource.cs
+index 6d1e41c1..b63c5b0d 100644
+--- a/EmptyHouse/Assets/01. Scripts/Game/Zombie/IZombiePerceptionSource.cs	
++++ b/EmptyHouse/Assets/01. Scripts/Game/Zombie/IZombiePerceptionSource.cs	
+@@ -11,6 +11,7 @@ public interface IZombiePerceptionSource
+     bool IsSpectator { get; }
+     bool IsCrouching { get; }
+     bool IsMoving { get; }
++    bool IsSprinting { get; } // 달리는 중인가 — PlayerController.Sprinting(오너 권위 복제값) 그대로. Teacher 감지·경고 판정 전용이며 기존 종은 읽지 않는다
+     Vector3 Velocity { get; } // 서버 위치 델타로 구한 이동 속도(m/s · 3D). 관성 추격 첫 간선 = 타겟의 마지막 속도 벡터(좀비공통 4-4). 소유자 권위 NetworkTransform 이라 Rigidbody 속도는 비신뢰
+     bool CarriesScrap { get; } // 인벤에 스크랩 1개 이상(등급 무관 — 좀비타입 5-1). Dog 후각의 유일한 트리거
+     Vector3 LookDirection { get; } // 시선 방향(월드 단위 벡터) 서버 근사 — 몸 yaw + 복제 조준 파라미터(AimPitch·AimYawOffset). 카메라 원뿔은 복제되지 않아 Lurker 「발견」 판정이 이 근사를 쓴다
+diff --git a/EmptyHouse/Assets/01. Scripts/Game/Zombie/ZombieAnimator.cs b/EmptyHouse/Assets/01. Scripts/Game/Zombie/ZombieAnimator.cs
+index b25a2126..220f2518 100644
+--- a/EmptyHouse/Assets/01. Scripts/Game/Zombie/ZombieAnimator.cs	
++++ b/EmptyHouse/Assets/01. Scripts/Game/Zombie/ZombieAnimator.cs	
+@@ -57,6 +57,8 @@ public partial class ZombieAnimator : NetworkBehaviour
+ 
+     private const string roarLayerName = "Roar (Upper)"; // AnimationSetupTool 이 만드는 상체 전용 포효 레이어 이름
+     private const string roarStateTag = "Roar";          // 포효 재생 판정 태그 — 클립 길이가 연출 시간의 원천이라 코드 타이머를 두지 않는다(D-2)
++    private const string roarEmptyStateName = "Empty";   // 포효 레이어의 기본(빈) 상태 — 포효 취소 시 크로스페이드 목적지
++    private const float roarInterruptFadeSeconds = 0.15f; // 포효 취소 크로스페이드(초). 이후 레이어 가중치는 oneShotLayerFadeSeconds 로 내려간다
+     private const string attackLayerName = "Attack (Upper)"; // AnimationSetupTool 이 만드는 상체 전용 공격 레이어 이름. Caged 컨트롤러엔 없다
+     private const string attackStateTag = "Attack";          // 공격 재생 판정 태그
+     private const float oneShotLayerFadeSeconds = 0.1f;      // 상체 원샷 레이어 가중치 페이드(초). 0이면 켜지고 꺼질 때 상체가 팝 한다
+@@ -98,6 +100,7 @@ public partial class ZombieAnimator : NetworkBehaviour
+     private static readonly int turnMulHash = Animator.StringToHash("TurnMul");
+     private static readonly int roarTriggerHash = Animator.StringToHash("RoarTrigger");
+     private static readonly int roarTagHash = Animator.StringToHash(roarStateTag);
++    private static readonly int roarEmptyStateHash = Animator.StringToHash(roarEmptyStateName);
+     private static readonly int attackTriggerHash = Animator.StringToHash("AttackTrigger");
+     private static readonly int attackTagHash = Animator.StringToHash(attackStateTag);
+     private static readonly int locomotionStateHash = Animator.StringToHash(locomotionStateName);
+@@ -118,6 +121,8 @@ public partial class ZombieAnimator : NetworkBehaviour
+     private float previousYaw;     // 직전 프레임의 좀비 루트 Y 회전(도). 회전 각속도는 이 차이로 구한다
+     private float smoothedYawRate; // 평활된 회전 각속도(도/초, 부호 있음)
+     private int roarLayerIndex;    // 상체 전용 포효 레이어 인덱스. 스폰 시 이름으로 찾는다
++    private bool hasRoarEmptyState; // 포효 레이어에 Empty 상태가 있는가 — 없으면 포효 취소를 건너뛴다
++    private ZombieStateKind lastStateKind; // 직전에 반영한 복제 상태 — 포효 취소 판정(RoarTransition 에서 나가는 에지)용
+     private int attackLayerIndex;  // 상체 전용 공격 레이어 인덱스. 없는 컨트롤러(Caged)면 -1
+     private int hitLayerIndex;     // 전신 피격 레이어 인덱스. 꺼져 있거나 없는 컨트롤러(Caged)면 -1
+     private bool hasFallStates;    // 피격 레이어에 Fall·GetUp 상태가 있는가 — 있으면 기절을 클립으로, 없으면 코드 눕힘으로 그린다
+@@ -136,6 +141,8 @@ public override void OnNetworkSpawn()
+         previousYaw = controller.transform.eulerAngles.y;
+         smoothedYawRate = 0f;
+         roarLayerIndex = animator.GetLayerIndex(roarLayerName);
++        hasRoarEmptyState = roarLayerIndex >= 0 && animator.HasState(roarLayerIndex, roarEmptyStateHash);
++        lastStateKind = controller.CurrentState;
+         attackLayerIndex = animator.GetLayerIndex(attackLayerName);
+         hitLayerIndex = hitReactionEnabled ? animator.GetLayerIndex(hitLayerName) : -1;
+         hasFallStates = hitLayerIndex >= 0 && animator.HasState(hitLayerIndex, fallStateHash) && animator.HasState(hitLayerIndex, getUpStateHash);
+@@ -406,6 +413,18 @@ private float ResolveTurnMultiplier()
+     /// <param name="kind">복제된 현재 좀비 상태.</param>
+     private void HandleStateChanged(ZombieStateKind kind)
+     {
++        ZombieStateKind previousKind = lastStateKind;
++        lastStateKind = kind;
++
++        // 포효 취소 — 발각 전환이 추격 없이 배회로 끝났고 종이 원할 때만(Teacher 경고 취소) 포효 레이어를 비운다.
++        // 추격·도주(Oiler)·경직 등 다른 출구와 옵트인하지 않은 종은 종전대로 클립 끝까지 재생된다.
++        if (hasRoarEmptyState && EmptyHouse.Zombie.Rules.RoarInterruptRules.ShouldInterrupt(
++                previousKind == ZombieStateKind.RoarTransition, kind == ZombieStateKind.Wander, controller.InterruptsRoarOnCancel))
++        {
++            animator.ResetTrigger(roarTriggerHash);
++            animator.CrossFadeInFixedTime(roarEmptyStateHash, roarInterruptFadeSeconds, roarLayerIndex);
++        }
++
+         // 포효는 상태 유지가 아니라 발각 「순간」의 원샷 연출이다 — 전이 에지에서만 트리거를 세운다.
+         // 늦게 접속한 클라이언트는 이 에지를 놓치지만, 지나간 포효를 되감을 이유가 없어 그대로 둔다.
+         if (kind == ZombieStateKind.RoarTransition)
+diff --git a/EmptyHouse/Assets/01. Scripts/Game/Zombie/ZombieController.cs b/EmptyHouse/Assets/01. Scripts/Game/Zombie/ZombieController.cs
+index 734c1db6..2651adb2 100644
+--- a/EmptyHouse/Assets/01. Scripts/Game/Zombie/ZombieController.cs	
++++ b/EmptyHouse/Assets/01. Scripts/Game/Zombie/ZombieController.cs	
+@@ -248,6 +248,15 @@ protected virtual void ServerContributePerception(ZombiePerceptionBuilder builde
+     /// </summary>
+     public virtual bool IsVanished => false;
+ 
++    /// <summary>
++    /// 발각 전환(RoarTransition)이 추격으로 이어지지 않고 취소돼 배회로 돌아갈 때 포효 레이어를 즉시 끊을지 — 종 고정값이라
++    /// 전 클라이언트에서 같은 답이다. 기본 = 끊지 않음(포효 클립 끝까지 재생 · 기존 종 동작 유지). 사용 종: Teacher(경고 취소).
++    /// </summary>
++    public virtual bool InterruptsRoarOnCancel => false;
++
++    /// <summary>같은 개체의 상태 머신 — 종 파생이 발각 전환을 거치지 않는 전이(Student 쿨다운 중 즉시 도주)를 걸 때만 쓴다.</summary>
++    protected ZombieStateMachine StateMachine => stateMachine;
++
+     /// <summary>
+     /// 훅 ④ — 기절이 끝날 때 복귀할 상태. Update 의 기절 해제 분기에서 호출되며 반환 직후 그 상태로 강제 전이한다.
+     /// 복귀에 딸린 부수 효과(운반 해제 등)는 여기서 처리한다. 기본 = 배회. 사용 종: Oiler(업혀 있으면 내려놓고 도주).
+diff --git a/EmptyHouse/Assets/01. Scripts/Game/Zombie/ZombiePerceptionSource.cs b/EmptyHouse/Assets/01. Scripts/Game/Zombie/ZombiePerceptionSource.cs
+index 0a865859..17b44351 100644
+--- a/EmptyHouse/Assets/01. Scripts/Game/Zombie/ZombiePerceptionSource.cs	
++++ b/EmptyHouse/Assets/01. Scripts/Game/Zombie/ZombiePerceptionSource.cs	
+@@ -31,6 +31,7 @@ public sealed class ZombiePerceptionSource : NetworkBehaviour, IZombiePerception
+     private bool carriesScrap; // 서버 소유 플래그 — 인벤 슬롯은 복제되지 않는 오너 로컬이라 오너가 요약값만 밀어 올린다
+     private bool ownerSentCarriesScrap; // 오너가 마지막으로 서버에 보낸 값 — 변할 때만 RPC 를 태운다
+     private PlayerHeadCameraFollow cameraFollow; // 같은 오브젝트의 카메라 공전 중심 — 눈 위치(뷰 원점)의 원천. 원격 인스턴스도 같은 값을 재구성한다(P-050 적용결과)
++    private PlayerController playerController; // 같은 오브젝트의 이동 권위 — 달리기 복제값(Sprinting)의 원천. Awake 캐시
+     private Animator aimAnimator; // 조준 파라미터(AimPitch·AimYawOffset) 원천 — 오너는 PlayerAnimator 가 쓰고 서버·원격은 OwnerNetworkAnimator 복제로 같은 값을 받는다
+     private static readonly int aimPitchHash = Animator.StringToHash("AimPitch"); // 시선 pitch(도, 아래가 양수 — PlayerController.AimPitchDeg)
+     private static readonly int aimYawOffsetHash = Animator.StringToHash("AimYawOffset"); // 시선-하체 yaw 차(도 — PlayerController.AimYawOffsetDeg)
+@@ -53,9 +54,11 @@ private void Awake()
+         flashlight = GetComponent<PlayerFlashlight>();
+         cameraFollow = GetComponent<PlayerHeadCameraFollow>();
+         aimAnimator = GetComponentInChildren<PlayerAnimator>(true).Animator;
++        playerController = GetComponent<PlayerController>();
+     }
+     public bool IsCrouching => isCrouching;
+     public bool IsMoving => isMoving;
++    public bool IsSprinting => playerController != null && playerController.Sprinting; // 달리기 복제값(달리기 키·이동 입력·비위장·비웅크림·스태미나를 오너가 이미 합성) — 서버에서도 유효
+     public Vector3 Velocity => velocity; // IZombiePerceptionSource — FixedUpdate 서버 분기에서 갱신
+     public bool CarriesScrap => carriesScrap;
+ 

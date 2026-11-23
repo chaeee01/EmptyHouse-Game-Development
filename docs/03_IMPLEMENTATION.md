@@ -19,7 +19,7 @@
 | 구분 | 파일(팀 저장소 내 경로 요약) | 내용 |
 |---|---|---|
 | 신규 | `Zombie/Data/TeacherProfileSO.cs` | Teacher 프로파일(경고 시간·유예 수치) |
-| 신규 | `Zombie/Species/ZombieControllerTeacher.cs` | 감지 게이트(훅②) + 경고 상태 교체(훅③) + 경고 취소 |
+| 신규 | [`Zombie/Species/ZombieControllerTeacher.cs`](../src/Teacher/ZombieControllerTeacher.cs) | 감지 게이트(훅②) + 경고 상태 교체(훅③) + 경고 취소 |
 | 신규 | `Zombie/States/TeacherStates.cs` | 경고 상태 |
 | 신규 | `Zombie/Rules/TeacherWarningRules.cs` + asmdef | 경고 판정 순수 규칙(Unity 비의존) |
 | 신규 | `Zombie/Rules/Tests/TeacherWarningRulesTests.cs` + asmdef | EditMode 테스트 9개 |
@@ -140,6 +140,8 @@
 ## 부록 A. 종별 구조 · 네트워크 연동 · 예외 처리 (코드 기준, 2026-11-23)
 
 ### A-1. 클래스 구조
+> 코드: Teacher [`src/Teacher`](../src/Teacher) · Student [`src/Student`](../src/Student) · 공용 [`src/Shared`](../src/Shared) · 팀 공통(참고) [`src/TeamSystems`](../src/TeamSystems) · 팀 공통 파일 본인 변경분 [`OWN_CHANGES.diff`](../src/TeamSystems/OWN_CHANGES.diff) · 파일 출처 [`SOURCES.md`](../SOURCES.md)
+
 팀 공통 `ZombieController`(서버 틱·감지·의심도·상태 머신 구동)와 `ZombieProfileSO`(공통 수치)를 상속하고, 팀이 열어 둔 확장 지점만 재정의한다. 상태는 팀 `IZombieState` 를 구현한다.
 
 | 역할 | Teacher | Student |
